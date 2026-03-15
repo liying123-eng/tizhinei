@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公务员适配度测试</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--card:#fff;--primary:#4f6ef7;--primary-light:#e8ecff;
+  --text:#1a1a2e;--text2:#555;--text3:#999;
+  --green:#22c55e;--blue:#3b82f6;--yellow:#eab308;--orange:#f97316;--red:#ef4444;--purple:#7c3aed;
+  --shadow:0 2px 16px rgba(0,0,0,.08);--radius:16px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.page{display:none;min-height:100vh;padding:20px 16px}
+.page.active{display:flex;flex-direction:column;align-items:center}
+
+/* Start Page */
+.start-page{justify-content:center;text-align:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+.start-page h1{font-size:32px;font-weight:800;margin-bottom:12px;text-shadow:0 2px 8px rgba(0,0,0,.2)}
+.start-page .subtitle{font-size:16px;opacity:.9;margin-bottom:8px}
+.start-page .desc{font-size:13px;opacity:.7;max-width:400px;margin:0 auto 24px;line-height:1.8}
+.start-btn{padding:16px 48px;border:none;border-radius:50px;background:#fff;color:#764ba2;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:all .3s}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(0,0,0,.3)}
+.start-tags{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.start-tags span{background:rgba(255,255,255,.15);padding:6px 14px;border-radius:20px;font-size:12px;backdrop-filter:blur(4px)}
+.notice-box{max-width:420px;margin:0 auto 16px;padding:14px 18px;border-radius:12px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);text-align:left;font-size:13px;line-height:1.9;opacity:.92}
+.notice-box .notice-title{font-weight:700;font-size:13px;margin-bottom:2px}
+
+/* Quiz Page */
+.quiz-page{justify-content:flex-start;max-width:600px;margin:0 auto;width:100%}
+.progress-wrap{width:100%;margin-bottom:24px;position:sticky;top:0;background:var(--bg);padding:16px 0 8px;z-index:10}
+.progress-bar{height:6px;background:#ddd;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:3px;transition:width .4s ease}
+.progress-text{font-size:13px;color:var(--text3);margin-top:6px;text-align:center;font-weight:600}
+
+.question-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 24px;width:100%;margin-bottom:20px;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.q-number{font-size:13px;color:var(--primary);font-weight:700;margin-bottom:6px}
+.q-text{font-size:17px;font-weight:700;margin-bottom:20px;line-height:1.5}
+.q-options{display:flex;flex-direction:column;gap:10px}
+.q-opt{padding:14px 18px;border-radius:12px;border:1.5px solid #e0e0e0;background:var(--card);cursor:pointer;font-size:14px;font-weight:500;color:var(--text2);transition:all .2s;line-height:1.5}
+.q-opt:hover{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.q-opt.selected{border-color:var(--primary);background:var(--primary);color:#fff;font-weight:600;box-shadow:0 2px 12px rgba(79,110,247,.3)}
+.q-opt.disabled{pointer-events:none;opacity:.5}
+
+.nav-btns{display:flex;gap:10px;margin-top:16px;width:100%}
+.nav-btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.nav-btn.prev{background:#e5e7eb;color:var(--text2)}
+.nav-btn.prev:hover{background:#d1d5db}
+.nav-btn.next{background:var(--primary);color:#fff}
+.nav-btn.next:hover{background:#3b5de7}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* Result Page */
+.result-page{max-width:600px;margin:0 auto;width:100%;padding-top:32px;padding-bottom:40px}
+.result-header{text-align:center;padding:32px 24px;border-radius:var(--radius);margin-bottom:20px;color:#fff;position:relative;overflow:hidden}
+.result-header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:inherit;filter:blur(0);z-index:0}
+.result-header *{position:relative;z-index:1}
+.result-score{font-size:64px;font-weight:900;text-shadow:0 2px 12px rgba(0,0,0,.2)}
+.result-score span{font-size:22px;opacity:.7}
+.result-badge{display:inline-block;padding:8px 24px;border-radius:24px;background:rgba(255,255,255,.2);font-size:18px;font-weight:700;margin-top:10px;backdrop-filter:blur(4px)}
+.result-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:16px}
+.result-card h3{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.comment-text{font-size:15px;line-height:1.9;color:var(--text)}
+.chart-wrap{max-width:360px;margin:0 auto}
+.dim-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.dim-item:last-child{border:none}
+.dim-label{width:90px;font-weight:700;flex-shrink:0}
+.dim-bar-wrap{flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden}
+.dim-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.dim-pct{width:36px;text-align:right;font-weight:700;font-size:12px}
+.dim-comment{font-size:13px;color:var(--text2);padding:6px 0 6px 100px;line-height:1.6}
+.share-tip{text-align:center;color:var(--text3);font-size:13px;margin-top:20px;padding:16px;background:var(--card);border-radius:var(--radius)}
+.restart-btn{display:block;margin:20px auto 0;padding:14px 40px;border:none;border-radius:50px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(118,75,162,.3);transition:all .2s}
+.restart-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(118,75,162,.4)}
+
+@media(max-width:480px){
+  .start-page h1{font-size:26px}
+  .question-card{padding:22px 18px}
+  .q-text{font-size:15px}
+  .q-opt{padding:12px 14px;font-size:13px}
+  .result-score{font-size:52px}
+  .dim-comment{padding-left:0;margin-top:4px}
+}
+</style>
+</head>
+<body>
+
+<!-- Start Page -->
+<div class="page start-page active" id="pageStart">
+  <h1>你适合当公务员吗？</h1>
+  <p class="subtitle">20道选择题，测出你的体制适配度</p>
+  <div class="start-tags">
+    <span>安稳心</span><span>抗委屈力</span><span>服从性</span>
+    <span>重复耐受</span><span>人情世故</span><span>延迟满足</span>
+  </div>
+  <p class="desc">基于社交平台上千条真实讨论提炼而成<br>不是官方套话，是过来人的大实话<br>测测你是天选公务员还是体制绝缘体</p>
+  <div class="notice-box">
+    <div class="notice-title">声明</div>
+    本问卷为硕士自研项目，参考社交平台数据和部分文献，未做信度效度测试。职场选择属于人生大事，结论仅供参考。
+  </div>
+  <div class="notice-box">
+    <div class="notice-title">作答原则</div>
+    请根据内心的真实倾向作答，选择最贴近你心态和行为偏好的选项——即"我倾向于……"而非"我一定会……"。不必纠结现实中的实际选择，关注的是你内心的第一反应。
+  </div>
+  <button class="start-btn" onclick="startQuiz()">开始测试</button>
+</div>
+
+<!-- Quiz Page -->
+<div class="page quiz-page" id="pageQuiz">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">1 / 20</div>
+  </div>
+  <div id="questionArea"></div>
+  <div class="nav-btns">
+    <button class="nav-btn prev" id="btnPrev" onclick="prevQ()" disabled>上一题</button>
+    <button class="nav-btn next" id="btnNext" onclick="nextQ()" disabled>下一题</button>
+  </div>
+</div>
+
+<!-- Result Page -->
+<div class="page result-page" id="pageResult">
+  <div class="result-header" id="resultHeader">
+    <div class="result-score" id="resultScore">0<span> / 100</span></div>
+    <div class="result-badge" id="resultBadge"></div>
+  </div>
+  <div class="result-card">
+    <h3>测试报告</h3>
+    <div class="comment-text" id="resultComment"></div>
+  </div>
+  <div class="result-card">
+    <h3>六维雷达图</h3>
+    <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+  </div>
+  <div class="result-card">
+    <h3>各维度分析</h3>
+    <div id="dimAnalysis"></div>
+  </div>
+  <div class="share-tip">截图分享给朋友，看看谁才是天选公务员</div>
+  <button class="restart-btn" onclick="restart()">再测一次</button>
+</div>
+
+<script>
+const DIMS = [
+  {key:'stable',label:'安稳心',icon:'🏠',count:4,
+    high:'你天生就是吃公家饭的料，稳如磐石，一成不变对你来说就是岁月静好。',
+    mid:'你内心有安稳的一面，也有想探索的冲动。你不排斥稳定，但纯粹一成不变也会让你有点痒。进体制可以，但要找到自己的节奏。',
+    low:'你的内心住着一个不安分的灵魂，体制那堵墙关不住你，你迟早要去外面闯。'},
+  {key:'tough',label:'抗委屈力',icon:'🛡️',count:3,
+    high:'领导打回你方案十次你面不改色，论资排辈你也不急——真·体制铁人。',
+    mid:'你的抗压能力还行，小委屈能消化，大委屈还是会破防。建议修炼一下钝感力，学会左耳进右耳出。',
+    low:'你的委屈阈值太低了，体制内那些气你一天都受不了，三天就想掀桌子。'},
+  {key:'obey',label:'服从性',icon:'🤝',count:3,
+    high:'听话照做你是专业的，领导说往东你绝不往西，执行力拉满。',
+    mid:'你不是完全听话的人，也不是刺头。合理的听，不合理的保留意见。在体制内得学会"表面服从，心里有数"。',
+    low:'个人意识太强了宝子，你就是那种"我觉得我的方案更好"然后被体制毒打的人。'},
+  {key:'repeat',label:'重复耐受',icon:'🔄',count:4,
+    high:'同一件事做一万遍你都不烦，公务员DNA已觉醒，写材料都能写出快感。',
+    mid:'重复性工作你能忍但不享受，时间长了可能会倦怠。如果进体制，建议给自己找点小目标和节奏感，别让自己被磨平。',
+    low:'你需要新鲜感和刺激，一成不变对你来说是慢性死亡，体制会让你窒息。'},
+  {key:'social',label:'人情世故',icon:'🎭',count:3,
+    high:'你是天生的人际高手，领导暗示你秒懂，酒桌文化你拿捏，体制内如鱼得水。',
+    mid:'你不算人情世故高手，但基本的人际交往还过得去。在体制内不会太吃亏，但想往上走的话，得再磨练一下察言观色的本领。',
+    low:'你太直了，不会来事在体制内寸步难行，建议先修炼一下人情世故再考虑上岸。'},
+  {key:'delay',label:'延迟满足',icon:'⏳',count:3,
+    high:'低欲望+能等+不需要正反馈，你就是体制最爱的那种人，稳稳的幸福。',
+    mid:'你能等一阵子，但太久了也受不了。体制内的慢节奏你需要适应一下，建议培养点业余爱好来对冲等待期的焦虑。',
+    low:'你需要即时回报和成就感，体制内那种慢慢熬的节奏会把你逼疯。'}
+];
+
+const QUESTIONS = [
+  // 安稳心 vs 折腾欲 (dim 0, 4题)
+  {dim:0,text:'周末你更想做什么？',opts:[
+    {t:'在家待着就很满足，能不出门就不出门',s:4},
+    {t:'在家躺着追剧打游戏，岁月静好',s:3},
+    {t:'约朋友吃个饭逛个街，简单快乐',s:2},
+    {t:'研究搞点副业或者学个新技能',s:1},
+    {t:'要是有资本我现在就去创业了',s:0}]},
+  {dim:0,text:'朋友说"你这辈子就这样了"，你的反应？',opts:[
+    {t:'谢谢夸奖，我就喜欢平平淡淡的',s:4},
+    {t:'这样挺好的啊，稳定就是福',s:3},
+    {t:'有点不甘心，但也不想折腾',s:2},
+    {t:'不行，我还有很多想法没实现',s:1},
+    {t:'这话激励到我了，我偏要折腾出点名堂',s:0}]},
+  {dim:0,text:'关于"铁饭碗"你怎么看？',opts:[
+    {t:'铁饭碗是人生最大的赢，考上就躺赢了',s:4},
+    {t:'铁饭碗多好啊，踏踏实实过日子',s:3},
+    {t:'有个保底挺好的，安全感很重要',s:2},
+    {t:'铁饭碗也可能是铁锁链吧',s:1},
+    {t:'我宁愿自己闯，打死不端铁饭碗',s:0}]},
+  {dim:0,text:'如果工作十年后你的生活和现在几乎一样，你觉得？',opts:[
+    {t:'求之不得，一切不变就是最好的安排',s:4},
+    {t:'挺好的，稳定就是最大的幸福',s:3},
+    {t:'能接受，只要家人健康就行',s:2},
+    {t:'有点不甘心，我想要更多可能性',s:1},
+    {t:'那我活着干嘛？必须得有变化和突破',s:0}]},
+  // 抗委屈力 (dim 1, 3题)
+  {dim:1,text:'你花了3天写的方案，领导一句"重写"就打回来了，你？',opts:[
+    {t:'太正常了，改到领导满意为止，这就是工作',s:4},
+    {t:'问清楚哪里不行，改就完了，这不是常事嘛',s:3},
+    {t:'心里有点堵但还是重新写了',s:2},
+    {t:'跟朋友疯狂吐槽这领导有病',s:1},
+    {t:'当场就想怼回去，凭什么？',s:0}]},
+  {dim:1,text:'你能力比那个人强，但人家资历老所以升职了，你？',opts:[
+    {t:'天经地义，体制就该论资排辈，急什么',s:4},
+    {t:'能理解，体制内就是这样，慢慢来吧',s:3},
+    {t:'有点不爽但忍了，以后轮到我的',s:2},
+    {t:'挺不服的，凭什么论资排辈不看能力',s:1},
+    {t:'受不了，这种地方待着有什么意思',s:0}]},
+  {dim:1,text:'开会时领导当众批评了你（其实不全是你的问题），你？',opts:[
+    {t:'虚心接受，领导批评都是为我好',s:4},
+    {t:'先认了，会后再单独沟通，面子不重要',s:3},
+    {t:'忍住不说话，但心里记住了',s:2},
+    {t:'当场就想解释清楚，不能背锅',s:1},
+    {t:'直接翻脸，凭什么冤枉我',s:0}]},
+  // 服从性 vs 个人主义 (dim 2, 3题)
+  {dim:2,text:'领导安排了一个你觉得不太合理的任务，你会？',opts:[
+    {t:'领导安排的一定有他的道理，坚决执行',s:4},
+    {t:'先执行，有想法之后私下找机会说',s:3},
+    {t:'做是做，但心里觉得不舒服',s:2},
+    {t:'当面委婉提出"我觉得这样可能不太好"',s:1},
+    {t:'直接说"这不合理我不干"',s:0}]},
+  {dim:2,text:'团队讨论时你有一个明显更好的方案，但没人支持你，你？',opts:[
+    {t:'那肯定听团队的，我一个人说了不算',s:4},
+    {t:'那就按大家的来吧，团队意见比个人想法重要',s:3},
+    {t:'再争取一下，不行就算了',s:2},
+    {t:'虽然照做了但总觉得他们有眼无珠',s:1},
+    {t:'不听我的是他们的损失，我心里有数',s:0}]},
+  {dim:2,text:'你怎么看"听话"这个词？',opts:[
+    {t:'听话是美德，尤其在单位里',s:4},
+    {t:'在职场上听话是基本素养，尤其刚入职的时候',s:3},
+    {t:'合理的要求才听，不合理的不行',s:2},
+    {t:'听话=没主见，不是什么好词',s:1},
+    {t:'我这辈子最讨厌被人说"你要听话"',s:0}]},
+  // 重复耐受力 (dim 3, 4题)
+  {dim:3,text:'让你连续一个月每天干一模一样的事，你能接受吗？',opts:[
+    {t:'太好了，我最喜欢这种不用动脑的重复工作',s:4},
+    {t:'完全ok，我还挺享受这种规律的生活',s:3},
+    {t:'能忍，虽然有点无聊',s:2},
+    {t:'勉强，但内心非常抗拒',s:1},
+    {t:'想想就窒息，我需要新鲜感和变化',s:0}]},
+  {dim:3,text:'同样的流程你已经做了100遍了，第101遍你会？',opts:[
+    {t:'依然认认真真，每一遍都当第一遍对待',s:4},
+    {t:'还是按步骤来，流程就是流程，熟悉也不能省',s:3},
+    {t:'轻车熟路了但关键节点还是会注意',s:2},
+    {t:'闭着眼都能做了，随便搞搞得了',s:1},
+    {t:'太无聊了，能不能换个活儿给我干',s:0}]},
+  {dim:3,text:'关于写材料（报告、汇报、总结），你的态度？',opts:[
+    {t:'特别喜欢，反复打磨文字是我的爱好',s:4},
+    {t:'挺喜欢的，写东西让我有成就感',s:3},
+    {t:'不排斥，就是工作的一部分',s:2},
+    {t:'头大，但也没办法只能写',s:1},
+    {t:'一看到写材料三个字我就想逃',s:0}]},
+  {dim:3,text:'你怎么看"差不多就行了"这句话？',opts:[
+    {t:'坚决不认同，任何事都要做到完美',s:4},
+    {t:'不认同，做事就要做到位',s:3},
+    {t:'看情况，重要的事不能差不多',s:2},
+    {t:'很多事确实差不多就行了',s:1},
+    {t:'完全认同，人生苦短何必较真',s:0}]},
+  // 人情世故 (dim 4, 3题)
+  {dim:4,text:'领导暗示你帮他做一件"不算你份内的事"，你会？',opts:[
+    {t:'不用暗示，我早就主动帮领导干了',s:4},
+    {t:'秒懂，二话不说就去办了',s:3},
+    {t:'虽然心里不太情愿，但还是做了',s:2},
+    {t:'会做，但要让领导知道我是帮忙的',s:1},
+    {t:'凭什么？这又不是我的活',s:0}]},
+  {dim:4,text:'单位有个谁都不喜欢的同事，但他跟领导关系好，你怎么处理？',opts:[
+    {t:'主动跟他搞好关系，多个朋友多条路',s:4},
+    {t:'表面维护好关系，不得罪任何人',s:3},
+    {t:'保持基本礼貌，不远不近',s:2},
+    {t:'不喜欢就是不喜欢，表面功夫懒得做',s:1},
+    {t:'直接远离，我不伪装自己',s:0}]},
+  {dim:4,text:'关于"酒桌文化""饭局社交"你的态度？',opts:[
+    {t:'喜欢，饭局是拉近关系的好机会',s:4},
+    {t:'能理解，这也是工作的一部分，该应酬就应酬',s:3},
+    {t:'不太喜欢但能配合',s:2},
+    {t:'很排斥，但偶尔不得不去',s:1},
+    {t:'打死不去，下班就是我的时间',s:0}]},
+  // 延迟满足 (dim 5, 3题)
+  {dim:5,text:'你能接受月薪5-8k但旱涝保收干到退休吗？',opts:[
+    {t:'太完美了，稳定+不失业，夫复何求',s:4},
+    {t:'完全可以，稳定比什么都重要',s:3},
+    {t:'可以接受，至少不用担心失业',s:2},
+    {t:'不太甘心，总觉得自己值更多',s:1},
+    {t:'不行，我要的是高收入不是铁饭碗',s:0}]},
+  {dim:5,text:'工作三年了，没升职也没加薪，你怎么想？',opts:[
+    {t:'很正常，本来也没指望升多快',s:4},
+    {t:'正常，体制内就是慢慢来，急不得',s:3},
+    {t:'有点着急但还能等',s:2},
+    {t:'挺失落的，我付出这么多为了什么',s:1},
+    {t:'三年没动静？我早跑了',s:0}]},
+  {dim:5,text:'你做的工作很重要，但永远没人知道是你做的，你能接受吗？',opts:[
+    {t:'完全无所谓，默默奉献就挺好',s:4},
+    {t:'无所谓，做好自己的事就行',s:3},
+    {t:'稍微有点遗憾但不影响我工作',s:2},
+    {t:'还是希望被看到，不然多没成就感',s:1},
+    {t:'受不了，我需要正反馈和认可',s:0}]}
+];
+
+const LEVELS = [
+  {min:90,badge:'天选公务员',bg:'linear-gradient(135deg,#059669,#10b981)',
+   comment:'编制就是你的命中注定！你稳如泰山、忍如老僧、熬得住寂寞扛得起委屈，论资排辈你不急，一成不变你不烦，写材料你不怕。别犹豫了，赶紧去考公！你不进体制，那是组织的损失！'},
+  {min:75,badge:'非常适合',bg:'linear-gradient(135deg,#2563eb,#3b82f6)',
+   comment:'宝子你这体质太适合上岸了！规则意识强、情绪稳得住、重复工作不排斥。体制对你来说就是鱼找到了水。就是偶尔有那么一丢丢小棱角——磨一磨就完美了，进了体制你就是未来的处长苗子！'},
+  {min:60,badge:'基本适合',bg:'linear-gradient(135deg,#ca8a04,#eab308)',
+   comment:'你和公务员之间属于"门当户对但还需要磨合"。基本素质在线，但有些地方得调整——也许你有点受不了论资排辈，也许你偶尔管不住自己想怼人。没关系，进了体制慢慢修炼，假以时日你也能成老干部！'},
+  {min:45,badge:'有点悬',bg:'linear-gradient(135deg,#ea580c,#f97316)',
+   comment:'说实话你跟公务员之间差了点缘分。你可能太有自己的想法、太受不了一成不变、或者太不愿意当"听话的螺丝钉"。体制内那些流程和规矩可能会让你觉得在坐牢。建议认真想想：你是真想上岸，还是只是想要个安全感？'},
+  {min:30,badge:'不太合适',bg:'linear-gradient(135deg,#dc2626,#f87171)',
+   comment:'宝子你有没有考虑过创业或者自由职业？你的棱角太分明了，体制内的条条框框对你来说就是精神酷刑。你需要的是更大的舞台、更多的可能性、和说"不"的自由。别委屈自己往体制里挤了，外面的世界更适合你！'},
+  {min:0,badge:'体制绝缘体',bg:'linear-gradient(135deg,#7c3aed,#a855f7)',
+   comment:'哈哈哈你来测这个是不是家里逼的？你跟公务员简直八字不合！你是那种坐不住、忍不了、熬不起的自由灵魂——一成不变会让你疯、论资排辈让你炸、写材料让你想原地去世。别为难自己了，你就不是吃这碗饭的人，去闯你自己的江湖吧！'}
+];
+
+/* === Shuffle utility === */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let curQ = 0;
+let answers = {};          // key: real question index, value: real option index
+let quizOrder = [];        // shuffled question indices
+let optOrders = {};        // key: real question index, value: shuffled option indices
+
+function initQuiz() {
+  curQ = 0;
+  answers = {};
+  quizOrder = shuffle([...Array(QUESTIONS.length).keys()]);
+  optOrders = {};
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    optOrders[i] = shuffle([...Array(QUESTIONS[i].opts.length).keys()]);
+  }
+}
+
+function startQuiz() {
+  initQuiz();
+  document.getElementById('pageStart').classList.remove('active');
+  document.getElementById('pageQuiz').classList.add('active');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const realIdx = quizOrder[curQ];
+  const q = QUESTIONS[realIdx];
+  const optOrder = optOrders[realIdx];
+  const pct = ((curQ + 1) / QUESTIONS.length * 100).toFixed(0);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = (curQ + 1) + ' / ' + QUESTIONS.length;
+
+  const isLast = curQ === QUESTIONS.length - 1;
+  document.getElementById('btnPrev').disabled = curQ === 0;
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = isLast ? '查看结果' : '下一题';
+  btnNext.disabled = answers[realIdx] === undefined;
+
+  document.getElementById('questionArea').innerHTML = `
+    <div class="question-card">
+      <div class="q-number">Q${curQ + 1} · ${DIMS[q.dim].icon} ${DIMS[q.dim].label}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-options">
+        ${optOrder.map((oi, j) => `
+          <div class="q-opt ${answers[realIdx] === oi ? 'selected' : ''}" onclick="selectOpt(${j})">${q.opts[oi].t}</div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function selectOpt(displayIdx) {
+  const realIdx = quizOrder[curQ];
+  answers[realIdx] = optOrders[realIdx][displayIdx];
+  renderQuestion();
+}
+
+function nextQ() {
+  const realIdx = quizOrder[curQ];
+  if (answers[realIdx] === undefined) return;
+  if (curQ < QUESTIONS.length - 1) {
+    curQ++;
+    renderQuestion();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } else {
+    showResult();
+  }
+}
+
+function prevQ() {
+  if (curQ > 0) {
+    curQ--;
+    renderQuestion();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+}
+
+function showResult() {
+  document.getElementById('pageQuiz').classList.remove('active');
+  document.getElementById('pageResult').classList.add('active');
+  window.scrollTo({top: 0});
+
+  // Calculate scores per dimension
+  const dimScores = DIMS.map(() => 0);
+  const dimMax = DIMS.map(d => d.count * 4);  // 5 options: 0-4 each
+  for (let i = 0; i < QUESTIONS.length; i++) {
+    if (answers[i] !== undefined) {
+      dimScores[QUESTIONS[i].dim] += QUESTIONS[i].opts[answers[i]].s;
+    }
+  }
+
+  const totalRaw = dimScores.reduce((a, b) => a + b, 0);
+  const totalMax = dimMax.reduce((a, b) => a + b, 0);
+  const totalPct = Math.round(totalRaw / totalMax * 100);
+  const dimPcts = DIMS.map((d, i) => Math.round(dimScores[i] / dimMax[i] * 100));
+
+  // Find level
+  const level = LEVELS.find(l => totalPct >= l.min);
+
+  // Render header
+  const header = document.getElementById('resultHeader');
+  header.style.background = level.bg;
+  document.getElementById('resultScore').innerHTML = totalPct + '<span> / 100</span>';
+  document.getElementById('resultBadge').textContent = level.badge;
+  document.getElementById('resultComment').textContent = level.comment;
+
+  // Render radar chart
+  const ctx = document.getElementById('radarChart');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: DIMS.map(d => d.label),
+      datasets: [{
+        label: '你的得分',
+        data: dimPcts,
+        borderColor: '#7c3aed',
+        backgroundColor: 'rgba(124,58,237,.15)',
+        borderWidth: 2, pointRadius: 5,
+        pointBackgroundColor: '#7c3aed'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, font: { size: 10 } },
+        pointLabels: { font: { size: 12, weight: '600' } },
+        grid: { color: '#e5e7eb' }, angleLines: { color: '#e5e7eb' } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // Render dimension analysis
+  let bestIdx = 0, worstIdx = 0;
+  dimPcts.forEach((p, i) => {
+    if (p > dimPcts[bestIdx]) bestIdx = i;
+    if (p < dimPcts[worstIdx]) worstIdx = i;
+  });
+
+  const colors = ['#22c55e','#3b82f6','#8b5cf6','#f59e0b','#ec4899','#06b6d4'];
+  let html = '';
+  DIMS.forEach((d, i) => {
+    const pct = dimPcts[i];
+    // Dynamic threshold: high >= 70, mid 40-69, low < 40
+    let comment;
+    if (pct >= 70) {
+      comment = d.high;
+    } else if (pct >= 40) {
+      comment = d.mid;
+    } else {
+      comment = d.low;
+    }
+    const isBest = i === bestIdx;
+    const isWorst = i === worstIdx;
+    let tag = '';
+    if (isBest) tag = ' <span style="color:#22c55e;font-size:11px">最强项</span>';
+    if (isWorst) tag = ' <span style="color:#ef4444;font-size:11px">最弱项</span>';
+    html += `
+      <div class="dim-item">
+        <div class="dim-label">${d.icon} ${d.label}${tag}</div>
+        <div class="dim-bar-wrap"><div class="dim-bar-fill" style="width:${pct}%;background:${colors[i]}"></div></div>
+        <div class="dim-pct" style="color:${colors[i]}">${pct}%</div>
+      </div>
+      <div class="dim-comment">${comment}</div>
+    `;
+  });
+  document.getElementById('dimAnalysis').innerHTML = html;
+}
+
+function restart() {
+  document.getElementById('pageResult').classList.remove('active');
+  document.getElementById('pageStart').classList.add('active');
+  // Destroy existing chart to avoid canvas reuse issues
+  const canvas = document.getElementById('radarChart');
+  const chartInstance = Chart.getChart(canvas);
+  if (chartInstance) chartInstance.destroy();
+  window.scrollTo({top: 0});
+}
+</script>
+</body>
+</html>
